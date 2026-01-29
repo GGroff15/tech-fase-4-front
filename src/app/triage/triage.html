@@ -1,0 +1,238 @@
+<div class="triage-container">
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="reload-btn" (click)="reload()">Reload</button>
+    </div>
+  }
+
+  <!-- Header -->
+  <header class="header">
+    <h1>Assisted Medical Triage</h1>
+    <div class="status-indicator" [class]="'status-' + status()">
+      {{ getStatusLabel() }}
+    </div>
+  </header>
+
+  <div class="main-content">
+    <!-- Video Preview Section -->
+    <aside class="video-section">
+      <div class="video-wrapper">
+        <video #videoPreview autoplay muted playsinline></video>
+        @if (!localStream()) {
+          <div class="video-placeholder">
+            <span>Camera loading...</span>
+          </div>
+        }
+      </div>
+    </aside>
+
+    <!-- Form Section -->
+    <main class="form-section">
+      <form [formGroup]="triageForm" (ngSubmit)="onSubmit()">
+        <!-- Patient Complaint -->
+        <section class="form-group-section">
+          <h2>Patient Complaint</h2>
+          <div formGroupName="complaint">
+            <div class="form-field">
+              <label for="description">Description *</label>
+              <textarea
+                id="description"
+                formControlName="description"
+                placeholder="Describe the main symptoms or complaint"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-field">
+              <label for="duration">Duration *</label>
+              <input
+                type="text"
+                id="duration"
+                formControlName="duration"
+                placeholder="e.g., 2 days, 3 hours"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="severity">Severity *</label>
+              <select id="severity" formControlName="severity">
+                <option value="">Select severity</option>
+                <option value="mild">Mild</option>
+                <option value="moderate">Moderate</option>
+                <option value="severe">Severe</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vital Signs -->
+        <section class="form-group-section">
+          <h2>Vital Signs</h2>
+          <div formGroupName="vitalSigns" class="vital-signs-grid">
+            <div class="form-field">
+              <label for="heartRate">Heart Rate (bpm)</label>
+              <input
+                type="number"
+                id="heartRate"
+                formControlName="heartRate"
+                placeholder="e.g., 72"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="systolicBp">Systolic BP (mmHg)</label>
+              <input
+                type="number"
+                id="systolicBp"
+                formControlName="systolicBp"
+                placeholder="e.g., 120"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="diastolicBp">Diastolic BP (mmHg)</label>
+              <input
+                type="number"
+                id="diastolicBp"
+                formControlName="diastolicBp"
+                placeholder="e.g., 80"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="temperature">Temperature (°C)</label>
+              <input
+                type="number"
+                id="temperature"
+                formControlName="temperature"
+                step="0.1"
+                placeholder="e.g., 37.0"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="oxygenSaturation">Oxygen Saturation (%)</label>
+              <input
+                type="number"
+                id="oxygenSaturation"
+                formControlName="oxygenSaturation"
+                placeholder="e.g., 98"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- Medical History -->
+        <section class="form-group-section">
+          <h2>Medical History</h2>
+          <div formGroupName="medicalHistory">
+            <div class="form-field">
+              <label for="conditions">Pre-existing Conditions</label>
+              <textarea
+                id="conditions"
+                formControlName="conditions"
+                placeholder="Enter conditions separated by commas (e.g., diabetes, hypertension)"
+                rows="2"
+              ></textarea>
+            </div>
+
+            <div class="form-field">
+              <label for="medications">Current Medications</label>
+              <textarea
+                id="medications"
+                formControlName="medications"
+                placeholder="Enter medications separated by commas (e.g., aspirin, metformin)"
+                rows="2"
+              ></textarea>
+            </div>
+
+            <div class="form-field">
+              <label for="allergies">Known Allergies</label>
+              <textarea
+                id="allergies"
+                formControlName="allergies"
+                placeholder="Enter allergies separated by commas (e.g., penicillin, peanuts)"
+                rows="2"
+              ></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Submit Button -->
+        <div class="submit-section">
+          <button
+            type="submit"
+            class="submit-btn"
+            [disabled]="isSubmitDisabled()"
+          >
+            @if (status() === 'SUBMITTED') {
+              <span class="spinner"></span>
+              Analyzing...
+            } @else {
+              Submit for Triage
+            }
+          </button>
+        </div>
+      </form>
+
+      <!-- Triage Result -->
+      @if (status() === 'DONE' && triageResult()) {
+        <section class="result-section">
+          <h2>Triage Result</h2>
+
+          <div class="result-card">
+            <!-- Triage Level Badge -->
+            <div class="triage-level">
+              <span class="triage-badge" [class]="getTriageLevelClass()">
+                {{ triageResult()!.triageLevel }}
+              </span>
+              <span class="confidence">{{ getConfidencePercentage() }} confidence</span>
+            </div>
+
+            <!-- Risk Factors -->
+            @if (triageResult()!.riskFactors.length > 0) {
+              <div class="result-item">
+                <h3>Risk Factors</h3>
+                <ul>
+                  @for (factor of triageResult()!.riskFactors; track factor) {
+                    <li>{{ factor }}</li>
+                  }
+                </ul>
+              </div>
+            }
+
+            <!-- Inconsistencies -->
+            @if (triageResult()!.inconsistencies.length > 0) {
+              <div class="result-item">
+                <h3>Inconsistencies</h3>
+                <ul>
+                  @for (inconsistency of triageResult()!.inconsistencies; track inconsistency) {
+                    <li>{{ inconsistency }}</li>
+                  }
+                </ul>
+              </div>
+            }
+
+            <!-- Notes for Physician -->
+            @if (triageResult()!.notesForPhysician) {
+              <div class="result-item">
+                <h3>Notes for Physician</h3>
+                <p>{{ triageResult()!.notesForPhysician }}</p>
+              </div>
+            }
+
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+              <p>
+                <strong>Disclaimer:</strong> This is an AI-assisted triage summary.
+                A trained medical professional will review this information.
+              </p>
+            </div>
+          </div>
+        </section>
+      }
+    </main>
+  </div>
+</div>
