@@ -4,11 +4,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ApiService } from '../services/api.service';
 import { MediaService } from '../services/media.service';
 import { UiStatus, TriageResultResponse, ClinicalFormRequest } from '../models/api.models';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-triage',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
   templateUrl: './triage.html',
   styleUrl: './triage.css'
 })
@@ -25,6 +26,8 @@ export class TriageComponent implements OnInit, AfterViewInit {
   triageResult = signal<TriageResultResponse | null>(null);
   errorMessage = signal<string>('');
   localStream = this.mediaService.localStream;
+  videoEnabled = this.mediaService.videoEnabled;
+  audioEnabled = this.mediaService.audioEnabled;
 
   // Reactive form
   triageForm: FormGroup;
@@ -69,6 +72,14 @@ export class TriageComponent implements OnInit, AfterViewInit {
     if (this.videoPreview?.nativeElement && stream) {
       this.videoPreview.nativeElement.srcObject = stream;
     }
+  }
+
+  toggleVideo(): void {
+    this.mediaService.toggleVideoTrack();
+  }
+
+  toggleAudio(): void {
+    this.mediaService.toggleAudioTrack();
   }
 
   private async initializeSession(): Promise<void> {

@@ -336,3 +336,38 @@
   font-size: 0.875rem;
   color: #92400e;
 }
+
+/* Media control buttons below video preview */
+.media-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+.media-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, transform 0.08s;
+  font-size: 20px;
+}
+
+.media-toggle-btn:active {
+  transform: scale(0.98);
+}
+
+.media-toggle-btn.enabled {
+  background-color: #dcfce7; /* green light */
+  color: #166534; /* green */
+}
+
+.media-toggle-btn.disabled {
+  background-color: #fee2e2; /* red light */
+  color: #991b1b; /* red */
+}

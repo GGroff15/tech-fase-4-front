@@ -26,6 +26,31 @@
           </div>
         }
       </div>
+      <div class="media-controls" role="group" aria-label="Media controls">
+        <button
+          type="button"
+          class="media-toggle-btn"
+          (click)="toggleVideo()"
+          [class.enabled]="videoEnabled()"
+          [class.disabled]="!videoEnabled()"
+          aria-label="Toggle video transmission"
+          [attr.aria-pressed]="videoEnabled()"
+        >
+          <mat-icon>{{ videoEnabled() ? 'videocam' : 'videocam_off' }}</mat-icon>
+        </button>
+
+        <button
+          type="button"
+          class="media-toggle-btn"
+          (click)="toggleAudio()"
+          [class.enabled]="audioEnabled()"
+          [class.disabled]="!audioEnabled()"
+          aria-label="Toggle audio transmission"
+          [attr.aria-pressed]="audioEnabled()"
+        >
+          <mat-icon>{{ audioEnabled() ? 'mic' : 'mic_off' }}</mat-icon>
+        </button>
+      </div>
     </aside>
 
     <!-- Form Section -->

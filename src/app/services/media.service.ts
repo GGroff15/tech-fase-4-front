@@ -12,8 +12,12 @@ export class MediaService {
 
   private peerConnection: RTCPeerConnection | null = null;
   private _localStream = signal<MediaStream | null>(null);
+  private _videoEnabled = signal<boolean>(true);
+  private _audioEnabled = signal<boolean>(true);
 
   readonly localStream = this._localStream.asReadonly();
+  readonly videoEnabled = this._videoEnabled.asReadonly();
+  readonly audioEnabled = this._audioEnabled.asReadonly();
 
   async startStreaming(correlationId: string): Promise<MediaStream> {
     // Acquire local media stream
@@ -23,6 +27,11 @@ export class MediaService {
     });
 
     this._localStream.set(stream);
+    // Initialize track enabled signals based on acquired tracks
+    const hasVideo = stream.getVideoTracks().length > 0;
+    const hasAudio = stream.getAudioTracks().length > 0;
+    this._videoEnabled.set(hasVideo ? stream.getVideoTracks()[0].enabled : false);
+    this._audioEnabled.set(hasAudio ? stream.getAudioTracks()[0].enabled : false);
 
     // Create peer connection (no STUN/TURN needed for localhost)
     this.peerConnection = new RTCPeerConnection({ iceServers: [] });
@@ -67,6 +76,29 @@ export class MediaService {
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       this._localStream.set(null);
+      this._videoEnabled.set(false);
+      this._audioEnabled.set(false);
     }
+  }
+
+  toggleVideoTrack(): void {
+    const stream = this._localStream();
+    if (!stream) return;
+    const videoTracks = stream.getVideoTracks();
+    if (videoTracks.length === 0) return;
+    // Toggle enabled state for all video tracks
+    const newState = !videoTracks[0].enabled;
+    videoTracks.forEach(track => (track.enabled = newState));
+    this._videoEnabled.set(newState);
+  }
+
+  toggleAudioTrack(): void {
+    const stream = this._localStream();
+    if (!stream) return;
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) return;
+    const newState = !audioTracks[0].enabled;
+    audioTracks.forEach(track => (track.enabled = newState));
+    this._audioEnabled.set(newState);
   }
 }
