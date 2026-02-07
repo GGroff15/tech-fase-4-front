@@ -100,9 +100,9 @@
 
 .video-wrapper {
   position: relative;
-  width: 100%;
-  max-width: 480px;
-  aspect-ratio: 16 / 9;
+  width: min(100%, 640px);
+  max-width: 640px;
+  aspect-ratio: 4 / 3;
   background-color: #1f2937;
   border-radius: 8px;
   overflow: hidden;
@@ -112,6 +112,38 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.detection-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.detection-rectangle {
+  position: absolute;
+  border: 2px solid #f97316;
+  border-radius: 6px;
+  background: rgba(249, 115, 22, 0.15);
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.6);
+  pointer-events: none;
+}
+
+.detection-label {
+  position: absolute;
+  top: -1.5rem;
+  left: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(17, 24, 39, 0.95);
+  color: #fef3c7;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .video-placeholder {

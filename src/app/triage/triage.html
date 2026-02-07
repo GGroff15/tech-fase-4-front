@@ -20,6 +20,19 @@
     <aside class="video-section">
       <div class="video-wrapper">
         <video #videoPreview autoplay muted playsinline></video>
+        <div class="detection-overlay" aria-hidden="true">
+          @for (rect of detectionRects(); track rect.id) {
+            <div
+              class="detection-rectangle"
+              [style.left.px]="rect.left"
+              [style.top.px]="rect.top"
+              [style.width.px]="rect.width"
+              [style.height.px]="rect.height"
+            >
+              <span class="detection-label">{{ rect.label }}</span>
+            </div>
+          }
+        </div>
         @if (!localStream()) {
           <div class="video-placeholder">
             <span>Camera loading...</span>

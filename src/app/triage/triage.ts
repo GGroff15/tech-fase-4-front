@@ -6,6 +6,15 @@ import { MediaService } from '../services/media.service';
 import { UiStatus, TriageResultResponse, ClinicalFormRequest } from '../models/api.models';
 import { MatIconModule } from '@angular/material/icon';
 
+interface DetectionRect {
+  id: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  label: string;
+}
+
 @Component({
   selector: 'app-triage',
   standalone: true,
@@ -28,6 +37,8 @@ export class TriageComponent implements OnInit, AfterViewInit {
   localStream = this.mediaService.localStream;
   videoEnabled = this.mediaService.videoEnabled;
   audioEnabled = this.mediaService.audioEnabled;
+  detectionRects = signal<DetectionRect[]>([]);
+  private readonly videoReady = signal(false);
 
   // Reactive form
   triageForm: FormGroup;
@@ -60,6 +71,8 @@ export class TriageComponent implements OnInit, AfterViewInit {
         this.videoPreview.nativeElement.srcObject = stream;
       }
     });
+
+    this.setupDetectionOverlayEffect();
   }
 
   ngOnInit(): void {
@@ -72,6 +85,7 @@ export class TriageComponent implements OnInit, AfterViewInit {
     if (this.videoPreview?.nativeElement && stream) {
       this.videoPreview.nativeElement.srcObject = stream;
     }
+    this.videoReady.set(true);
   }
 
   toggleVideo(): void {
@@ -163,6 +177,52 @@ export class TriageComponent implements OnInit, AfterViewInit {
       return [];
     }
     return value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+  }
+
+  private setupDetectionOverlayEffect(): void {
+    effect(() => {
+      if (!this.videoReady()) {
+        this.detectionRects.set([]);
+        return;
+      }
+
+      const rects = this.computeDetectionRects();
+      this.detectionRects.set(rects);
+    });
+  }
+
+  private computeDetectionRects(): DetectionRect[] {
+    const stream = this.localStream();
+    const videoEl = this.videoPreview?.nativeElement;
+    const detections = this.mediaService.detections();
+
+    if (!videoEl || detections.length === 0 || !stream) {
+      return [];
+    }
+
+    const displayWidth = videoEl.clientWidth;
+    const displayHeight = videoEl.clientHeight;
+    const intrinsicWidth = videoEl.videoWidth || displayWidth;
+    const intrinsicHeight = videoEl.videoHeight || displayHeight;
+
+    if (!displayWidth || !displayHeight || !intrinsicWidth || !intrinsicHeight) {
+      return [];
+    }
+
+    const fitScale = Math.max(displayWidth / intrinsicWidth, displayHeight / intrinsicHeight);
+    const scaledWidth = intrinsicWidth * fitScale;
+    const scaledHeight = intrinsicHeight * fitScale;
+    const offsetX = (scaledWidth - displayWidth) / 2;
+    const offsetY = (scaledHeight - displayHeight) / 2;
+
+    return detections.map((d, index) => ({
+      id: `${d.className}-${Math.round(d.confidence * 100)}-${index}`,
+      left: d.x * fitScale - offsetX,
+      top: d.y * fitScale - offsetY,
+      width: d.width * fitScale,
+      height: d.height * fitScale,
+      label: `${d.className} ${Math.round(d.confidence * 100)}%`
+    }));
   }
 
   reload(): void {

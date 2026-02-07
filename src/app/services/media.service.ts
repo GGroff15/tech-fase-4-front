@@ -1,7 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { WebRTCOfferRequest, WebRTCAnswerResponse } from '../models/api.models';
+import {
+  WebRTCOfferRequest,
+  WebRTCAnswerResponse,
+  Detection
+} from '../models/api.models';
 
 @Injectable({
   providedIn: 'root'
@@ -11,13 +15,16 @@ export class MediaService {
   private readonly signalingUrl = 'http://localhost:8000';
 
   private peerConnection: RTCPeerConnection | null = null;
+  private detectionsChannel: RTCDataChannel | null = null;
   private _localStream = signal<MediaStream | null>(null);
   private _videoEnabled = signal<boolean>(true);
   private _audioEnabled = signal<boolean>(true);
+  private _detections = signal<Detection[]>([]);
 
   readonly localStream = this._localStream.asReadonly();
   readonly videoEnabled = this._videoEnabled.asReadonly();
   readonly audioEnabled = this._audioEnabled.asReadonly();
+  readonly detections = this._detections.asReadonly();
 
   async startStreaming(correlationId: string): Promise<MediaStream> {
     // Acquire local media stream
@@ -35,6 +42,14 @@ export class MediaService {
 
     // Create peer connection (no STUN/TURN needed for localhost)
     this.peerConnection = new RTCPeerConnection({ iceServers: [] });
+
+    this.detectionsChannel = this.peerConnection.createDataChannel('detections');
+    this.detectionsChannel.onmessage = (event) => {
+      this.handleDetectionMessage(event.data);
+    };
+    this.detectionsChannel.onclose = () => {
+      this._detections.set([]);
+    };
 
     // Add tracks to peer connection
     stream.getTracks().forEach(track => {
@@ -78,6 +93,12 @@ export class MediaService {
       this._localStream.set(null);
       this._videoEnabled.set(false);
       this._audioEnabled.set(false);
+      this._detections.set([]);
+    }
+
+    if (this.detectionsChannel) {
+      this.detectionsChannel.close();
+      this.detectionsChannel = null;
     }
   }
 
@@ -100,5 +121,63 @@ export class MediaService {
     const newState = !audioTracks[0].enabled;
     audioTracks.forEach(track => (track.enabled = newState));
     this._audioEnabled.set(newState);
+  }
+
+  private handleDetectionMessage(data: string | Blob): void {
+    if (typeof data === 'string') {
+      this.processDetectionPayload(data);
+      return;
+    }
+
+    if (data instanceof Blob) {
+      void data.text().then(text => this.processDetectionPayload(text)).catch(() => {
+        this._detections.set([]);
+      });
+    }
+  }
+
+  private processDetectionPayload(payload: string): void {
+    if (!payload) {
+      this._detections.set([]);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(payload);
+      const items = Array.isArray(parsed) ? parsed : [parsed];
+      const detections = items.map((item: any, index) => {
+
+        const adjustedWidth = (item.width ?? 0);
+        const adjustedHeight = (item.height ?? 0);
+        const adjustedX = (item.x ?? 0) - adjustedWidth / 2;
+        const adjustedY = (item.y ?? 0) - adjustedHeight / 2;
+
+        const detection: Detection = {
+          x: adjustedX,
+          y: adjustedY,
+          width: adjustedWidth,
+          height: adjustedHeight,
+          confidence: item.confidence ?? 0,
+          className: item.label ?? 'unknown'
+        };
+
+        console.debug('Detection bbox received', {
+          index,
+          x: detection.x,
+          y: detection.y,
+          width: detection.width,
+          height: detection.height,
+          confidence: detection.confidence,
+          className: detection.className
+        });
+
+        return detection;
+      });
+
+      this._detections.set(detections);
+    } catch (error) {
+      console.error('Failed to parse detection payload', error);
+      this._detections.set([]);
+    }
   }
 }

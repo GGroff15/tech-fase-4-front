@@ -51,5 +51,14 @@ export interface WebRTCAnswerResponse {
   type: string;
 }
 
+export interface Detection {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  confidence: number;
+  className: string;
+}
+
 // UI Status
 export type UiStatus = 'INIT' | 'STREAMING' | 'SUBMITTED' | 'DONE';
