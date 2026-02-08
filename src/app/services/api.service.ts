@@ -6,13 +6,14 @@ import {
   ClinicalFormRequest,
   TriageResultResponse
 } from '../models/api.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080';
+  private readonly baseUrl = environment.apiUrl;
 
   createSession(): Observable<SessionCreatedResponse> {
     return this.http.post<SessionCreatedResponse>(`${this.baseUrl}/sessions`, {});

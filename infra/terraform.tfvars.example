@@ -1,0 +1,19 @@
+# Example Terraform variables file
+# Copy this to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to Git (it's in .gitignore)
+
+project_id   = "your-gcp-project-id"
+region       = "us-central1"
+service_name = "medical-triage-ui"
+
+# Backend service URLs (replace with your actual backend URLs)
+api_url       = "https://your-api-service-xxxx.run.app"
+signaling_url = "https://your-signaling-service-xxxx.run.app"
+
+# Optional overrides (uncomment to customize)
+# max_instances = 10
+# min_instances = 0
+# memory_limit = "256Mi"
+# cpu_limit = "1"
+# container_concurrency = 80
+# timeout_seconds = 60

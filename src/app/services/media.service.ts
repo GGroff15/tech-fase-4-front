@@ -6,13 +6,14 @@ import {
   WebRTCAnswerResponse,
   Detection
 } from '../models/api.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MediaService {
   private readonly http = inject(HttpClient);
-  private readonly signalingUrl = 'http://localhost:8000';
+  private readonly signalingUrl = environment.signalingUrl;
 
   private peerConnection: RTCPeerConnection | null = null;
   private detectionsChannel: RTCDataChannel | null = null;

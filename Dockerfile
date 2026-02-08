@@ -7,6 +7,10 @@ ARG NGINX_VERSION=alpine3.22
 # Use a lightweight Node.js image for building (customizable via ARG)
 FROM node:${NODE_VERSION} AS builder
 
+# Build arguments for environment configuration
+ARG API_URL=http://localhost:8080
+ARG SIGNALING_URL=http://localhost:8000
+
 # Set the working directory inside the container
 WORKDIR /app
 
@@ -19,8 +23,10 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 # Copy the rest of the application source code into the container
 COPY . .
 
-# Build the Angular application
-RUN npm run build
+# Replace environment placeholders and build
+RUN sed -i "s|\${API_URL}|${API_URL}|g" src/environments/environment.prod.ts && \
+    sed -i "s|\${SIGNALING_URL}|${SIGNALING_URL}|g" src/environments/environment.prod.ts && \
+    npm run build
 
 # =========================================
 # Stage 2: Prepare Nginx to Serve Static Files
