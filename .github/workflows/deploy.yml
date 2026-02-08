@@ -15,7 +15,7 @@ on:
 
 env:
   GCP_REGION: us-central1
-  SERVICE_NAME: medical-triage-frontend
+  SERVICE_NAME: medical-triage-ui
   NODE_VERSION: '20'
 
 jobs:
