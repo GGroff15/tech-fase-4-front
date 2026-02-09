@@ -40,6 +40,15 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
+      - name: Debug Auth
+        run: |
+          echo "=== ENV VARS ==="
+          env | grep GOOGLE || true
+          echo "=== ADC ==="
+          gcloud auth application-default print-access-token || true
+          echo "=== ACCOUNTS ==="
+          gcloud auth list || true
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
